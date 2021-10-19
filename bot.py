@@ -3,6 +3,7 @@
 # Packages
 import discord
 import platform
+import subprocess
 
 # Custom Libraries
 import loadenv
@@ -45,6 +46,21 @@ async def on_message(message):
         print('Ping Pong Test')
         print(message.channel)
         return
+
+
+    # ラズパイの状態確認（SSHで毎回コマンド打つのだるいので）
+    if 'checkstatus' in message.content:
+        print('Command > checkstatus')
+        temp = subprocess.getoutput('vcgencmd measure_temp').split('=')[1]
+        clock = '{0:.2f}'.format(float(subprocess.getoutput(
+            'vcgencmd measure_clock arm').split('=')[1]) / 1000000000) + 'GHz'
+        volt = subprocess.getoutput(
+            'vcgencmd measure_volts core').split('=')[1]
+        mem = subprocess.getoutput('vcgencmd get_mem arm').split('=')[1] + 'B'
+
+        await message.channel.send('{}\n{}\n{}\n{}'.format(temp, clock, volt, mem))
+        return
+
 
 
 # 開始確認用
