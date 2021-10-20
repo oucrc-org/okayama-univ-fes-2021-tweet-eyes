@@ -22,17 +22,19 @@ client = discord.Client(activity=discord.Game(
 
 # =====以下予定=====
 # Twitter APIを定期実行して新しいツイートがあるか確認する
-# あった場合は main_channel で指定したチャンネルに各ツイートをメッセージとして送信（jsonとかで返ってくるのかしら、詳しくは追々確認する予定）
-#   then.送信を確認したらサムズアップ、ダウンの絵文字をスタンプ
-#   then.サムズアップが増えたらDB登録→〇をスタンプ
-#   then.サムズアップが減ったら破棄→×をスタンプ
+# あった場合はツイートのデータをDBに登録
+#   then. main_channel で指定したチャンネルに各ツイートをメッセージとして送信（jsonとかで返ってくるのかしら、詳しくは追々確認する予定）
+#   then. 送信を確認したらサムズアップ、ダウンの絵文字をスタンプ
+#   then. サムズアップが増えたらDBのaccepted_atに時刻を追加→〇をスタンプ→1分後とかにメッセ削除
+#   then. サムズアップが減ったらDBのaccepted_atはnull→×をスタンプ→1分後とかにメッセ削除
 # 
 # 備考: DB登録はsmpny7がAPI作るのでそれを叩く
 #       Discord botをアプリケーションとして常駐させる予定だが、その上でTwitter APIを叩けるかどうかは未確認
 # ==================
 
 
-# 以下は編集する必要なし
+
+# 以下は基本的に編集する必要なし
 
 # Botの動作確認用
 @client.event
@@ -60,7 +62,6 @@ async def on_message(message):
 
         await message.channel.send('{}\n{}\n{}\n{}'.format(temp, clock, volt, mem))
         return
-
 
 
 # 開始確認用
