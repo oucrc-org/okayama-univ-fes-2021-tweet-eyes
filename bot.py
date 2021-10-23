@@ -72,4 +72,4 @@ async def on_ready():
 
 
 # ログイン処理
-client.run(loadenv.TOKEN)
+client.run(loadenv.get_token())
