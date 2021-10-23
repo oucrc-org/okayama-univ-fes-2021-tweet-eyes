@@ -13,5 +13,10 @@ load_dotenv(dotenv_path)
 def get_token():
     return os.getenv('DISCORD_TOKEN')
 
-#def get_api():
+# データベースURL
+def get_db_url():
+    return os.getenv('DB_URL')
 
+# データベースキー
+def get_db_apikey():
+    return os.getenv('DB_APIKEY')
