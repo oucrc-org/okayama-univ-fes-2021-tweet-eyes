@@ -14,9 +14,13 @@ def get_token():
     return os.getenv('DISCORD_TOKEN')
 
 # データベースURL
-def get_db_url():
-    return os.getenv('DB_URL')
+def get_db_url(dir):
+    return os.getenv('DB_URL') + dir
 
 # データベースキー
 def get_db_apikey():
     return os.getenv('DB_APIKEY')
+
+def get_channel_id():
+    return os.getenv('DISCORD_CHANNEL_ID')
+    
