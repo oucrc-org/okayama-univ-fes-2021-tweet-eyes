@@ -8,6 +8,7 @@ import subprocess
 
 # Custom Libraries
 import loadenv
+import request
 
 
 # clientの宣言
@@ -19,6 +20,17 @@ client = discord.Client(activity=discord.Game(
 
 # デフォルトの送信先チャンネルのIDを静的に与えた方が良いかも
 main_channel = client.get_channel(loadenv.get_channel_id())
+
+
+# ツイート内容を格納するクラス
+# 引数はDBと同じ
+class tweet:
+    def __init__(self, twitter_id, avatar_url, display_name, comment, tweet_url):
+        self.twitter_id = twitter_id
+        self.avatar_url = avatar_url
+        self.display_name = display_name
+        self.comment = comment
+        self.tweet_url = tweet_url
 
 
 # =====以下予定=====
@@ -34,11 +46,37 @@ main_channel = client.get_channel(loadenv.get_channel_id())
 # ==================
 
 
+def set_embed(tweet):
+    embed = discord.Embed(
+        title=tweet.display_name,
+        color=0x4488ff,
+        description=tweet.comment,
+        url=tweet.tweet_url
+        )
+
+    embed.set_author(name=tweet.twitter_id,
+        url='https://twitter.com/' + tweet.twitter_id,
+        icon_url=tweet.avatar_url
+        )
+    return embed
+
+
 @tasks.loop(minutes=30.0)
 async def loop():
-    # ツイートごとに送信する
-    await main_channel.send('ここにテキストを挿入')
-    # このあとスタンプが押されたのを検知したら個別に関数呼び出して処理
+    # ツイート一覧の取得
+
+
+    # for: ツイートごとの処理
+        # ツイートから中身を取ってくる
+        tw = tweet('@ID', 'アイコンURL', 'ツイート主の名前', 'ツイート本文', 'ツイートURL')
+
+        # DB登録
+        request.post_database(tw, id)
+        
+        embed = set_embed(tw)
+        await main_channel.send(embed)
+        # スタンプ設置
+        # このあとスタンプが押されたのを検知したら個別に関数呼び出して処理
 
 
 # 以下は基本的に編集する必要なし
