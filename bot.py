@@ -1,6 +1,7 @@
 # coding: UTF-8
 
 # Packages
+from discord.ext import tasks
 import discord
 import platform
 import subprocess
@@ -17,7 +18,7 @@ client = discord.Client(activity=discord.Game(
 
 
 # デフォルトの送信先チャンネルのIDを静的に与えた方が良いかも
-#main_channel = discord.channel
+main_channel = client.get_channel(loadenv.get_channel_id())
 
 
 # =====以下予定=====
@@ -32,6 +33,12 @@ client = discord.Client(activity=discord.Game(
 #       Discord botをアプリケーションとして常駐させる予定だが、その上でTwitter APIを叩けるかどうかは未確認
 # ==================
 
+
+@tasks.loop(minutes=30.0)
+async def loop():
+    # ツイートごとに送信する
+    await main_channel.send('ここにテキストを挿入')
+    # このあとスタンプが押されたのを検知したら個別に関数呼び出して処理
 
 
 # 以下は基本的に編集する必要なし
