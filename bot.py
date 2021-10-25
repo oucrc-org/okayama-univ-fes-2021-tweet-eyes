@@ -91,7 +91,7 @@ async def on_message(message):
     if 'ping' in message.content:
         await message.channel.send('pong')
         print('Ping Pong Test')
-        print(message.channel)
+        print(message.channel.id)
         return
 
 
