@@ -1,6 +1,7 @@
 # coding: UTF-8
 
 # Packages
+from discord import channel
 from discord.ext import tasks
 import discord
 import platform
@@ -14,8 +15,10 @@ import request
 # clientの宣言
 # ゲームアクティビティに'<OSの名前> <バージョン>をプレイ中'と表示
 # memo: 余裕があればここ 'xx件の未承認' とかにしたい
+intents = discord.Intents.default()
+intents.reactions = True
 client = discord.Client(activity=discord.Game(
-    name=platform.system() + ' ' + platform.release()))
+    name=platform.system() + ' ' + platform.release()), intents=intents)
 
 
 # ツイート内容を格納するクラス
@@ -68,8 +71,6 @@ async def loop():
     tws = [tweet('@ID', 'https://pbs.twimg.com/profile_images/1354479643882004483/Btnfm47p_400x400.jpg',
                  'ツイート主の名前', 'ツイート本文', 'https://twitter.com')]
     for tw in tws:
-        # DB登録
-        request.post_database(tw, id)
 
         embed = set_embed(tw)
         message = await main_channel.send(embed=embed)
@@ -77,12 +78,26 @@ async def loop():
         # スタンプ設置
         await message.add_reaction('👍')
         await message.add_reaction('👎')
+        # DB登録
+        request.post_database(tw, message.id)
 
     # このあとスタンプが押されたのを検知したら個別に関数呼び出して処理
 
     # 以下は基本的に編集する必要なし
 
     # Botの動作確認用
+
+
+@client.event
+async def on_raw_reaction_add(payload):
+    if payload.member.bot:
+        return
+    message = await main_channel.fetch_message(payload.message_id)
+    if payload.emoji.name == '👍':
+        request.set_visible(message.id)
+        await message.delete()
+    if payload.emoji.name == '👎':
+        await message.delete()
 
 
 @client.event
