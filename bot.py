@@ -18,10 +18,6 @@ client = discord.Client(activity=discord.Game(
     name=platform.system() + ' ' + platform.release()))
 
 
-# デフォルトの送信先チャンネルのIDを静的に与えた方が良いかも
-main_channel = client.get_channel(loadenv.get_channel_id())
-
-
 # ツイート内容を格納するクラス
 # 引数はDBと同じ
 class tweet:
@@ -38,9 +34,9 @@ class tweet:
 # あった場合はツイートのデータをDBに登録
 #   then. main_channel で指定したチャンネルに各ツイートをメッセージとして送信（jsonとかで返ってくるのかしら、詳しくは追々確認する予定）
 #   then. 送信を確認したらサムズアップ、ダウンの絵文字をスタンプ
-#   then. サムズアップが増えたらDBのaccepted_atに時刻を追加→〇をスタンプ→1分後とかにメッセ削除
-#   then. サムズアップが減ったらDBのaccepted_atはnull→×をスタンプ→1分後とかにメッセ削除
-# 
+#   then. サムズアップが増えたらDBのis_visibleに1を代入→メッセ削除
+#   then. サムズダウンが減ったらDBのis_visibleに0→メッセ削除
+#
 # 備考: DB登録はsmpny7がAPI作るのでそれを叩く
 #       Discord botをアプリケーションとして常駐させる予定だが、その上でTwitter APIを叩けるかどうかは未確認
 # ==================
@@ -52,36 +48,43 @@ def set_embed(tweet):
         color=0x4488ff,
         description=tweet.comment,
         url=tweet.tweet_url
-        )
+    )
 
     embed.set_author(name=tweet.twitter_id,
-        url='https://twitter.com/' + tweet.twitter_id,
-        icon_url=tweet.avatar_url
-        )
+                     url='https://twitter.com/' + tweet.twitter_id,
+                     icon_url=tweet.avatar_url
+                     )
+    embed.add_field(name='承認', value='👍')
+    embed.add_field(name='却下', value='👎')
     return embed
 
 
-@tasks.loop(minutes=30.0)
+@tasks.loop(seconds=10)
 async def loop():
     # ツイート一覧の取得
 
-
     # for: ツイートごとの処理
-        # ツイートから中身を取ってくる
-        tw = tweet('@ID', 'アイコンURL', 'ツイート主の名前', 'ツイート本文', 'ツイートURL')
-
+    # ツイートから中身を取ってくる
+    tws = [tweet('@ID', 'https://pbs.twimg.com/profile_images/1354479643882004483/Btnfm47p_400x400.jpg',
+                 'ツイート主の名前', 'ツイート本文', 'https://twitter.com')]
+    for tw in tws:
         # DB登録
         request.post_database(tw, id)
-        
+
         embed = set_embed(tw)
-        await main_channel.send(embed)
+        message = await main_channel.send(embed=embed)
+
         # スタンプ設置
-        # このあとスタンプが押されたのを検知したら個別に関数呼び出して処理
+        await message.add_reaction('👍')
+        await message.add_reaction('👎')
+
+    # このあとスタンプが押されたのを検知したら個別に関数呼び出して処理
+
+    # 以下は基本的に編集する必要なし
+
+    # Botの動作確認用
 
 
-# 以下は基本的に編集する必要なし
-
-# Botの動作確認用
 @client.event
 async def on_message(message):
     if message.author.bot:
@@ -93,7 +96,6 @@ async def on_message(message):
         print('Ping Pong Test')
         print(message.channel.id)
         return
-
 
     # ラズパイの状態確認（SSHで毎回コマンド打つのだるいので）
     if 'checkstatus' in message.content:
@@ -112,8 +114,12 @@ async def on_message(message):
 # 開始確認用
 @client.event
 async def on_ready():
-
+    global main_channel
     print('ready...')
+
+    # デフォルトの送信先チャンネルのIDを静的に与えた方が良いかも
+    main_channel = await client.fetch_channel(loadenv.get_channel_id())
+    loop.start()
 
 
 # ログイン処理
