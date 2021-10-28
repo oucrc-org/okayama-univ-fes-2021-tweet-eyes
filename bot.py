@@ -72,16 +72,20 @@ async def loop():
     # ツイートから中身を取ってくる
     tws = [tweet(searchResult.user.screen_name, searchResult.user.profile_image_url_https, searchResult.user.name, searchResult.text, f'https://twitter.com/{searchResult.user.screen_name}/status/{searchResult.id_str}')
            for searchResult in searchResults if not hasattr(searchResult, 'retweeted_status')]
+           
     # これからすること: 1回投稿したツイートは除外する(RTを除外するところまでは実装しています)
     for tw in tws:
-        embed = set_embed(tw)
-        message = await main_channel.send(embed=embed)
-
-        # スタンプ設置
-        await message.add_reaction('👍')
-        await message.add_reaction('👎')
         # DB登録
-        request.post_database(tw, message.id)
+        result = request.post_database(tw, message.id)
+
+        # 登録成功時のみ処理
+        if result == result: # TODO: resultの値によって分岐
+            embed = set_embed(tw)
+            message = await main_channel.send(embed=embed)
+
+            # スタンプ設置
+            await message.add_reaction('👍')
+            await message.add_reaction('👎')
 
     # このあとスタンプが押されたのを検知したら個別に関数呼び出して処理
 
