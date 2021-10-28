@@ -1,16 +1,17 @@
 # coding: UTF-8
 
 # Packages
-from discord import channel
+from discord import channel, user
 from discord.ext import tasks
 import discord
 import platform
 import subprocess
+import tweepy
+import os
 
 # Custom Libraries
 import loadenv
 import request
-
 
 # clientの宣言
 # ゲームアクティビティに'<OSの名前> <バージョン>をプレイ中'と表示
@@ -62,16 +63,17 @@ def set_embed(tweet):
     return embed
 
 
-@tasks.loop(seconds=10)
+@ tasks.loop(seconds=10)
 async def loop():
     # ツイート一覧の取得
-
+    api = loadenv.get_tw_api()
+    searchResults = api.search_tweets('#にゃんこ大戦争')
     # for: ツイートごとの処理
     # ツイートから中身を取ってくる
-    tws = [tweet('@ID', 'https://pbs.twimg.com/profile_images/1354479643882004483/Btnfm47p_400x400.jpg',
-                 'ツイート主の名前', 'ツイート本文', 'https://twitter.com')]
+    tws = [tweet(searchResult.user.screen_name, searchResult.user.profile_image_url_https, searchResult.user.name, searchResult.text, f'https://twitter.com/{searchResult.user.screen_name}/status/{searchResult.id_str}')
+           for searchResult in searchResults if not hasattr(searchResult, 'retweeted_status')]
+    # これからすること: 1回投稿したツイートは除外する(RTを除外するところまでは実装しています)
     for tw in tws:
-
         embed = set_embed(tw)
         message = await main_channel.send(embed=embed)
 
@@ -88,7 +90,7 @@ async def loop():
     # Botの動作確認用
 
 
-@client.event
+@ client.event
 async def on_raw_reaction_add(payload):
     if payload.member.bot:
         return
@@ -100,7 +102,7 @@ async def on_raw_reaction_add(payload):
         await message.delete()
 
 
-@client.event
+@ client.event
 async def on_message(message):
     if message.author.bot:
         return
@@ -127,7 +129,7 @@ async def on_message(message):
 
 
 # 開始確認用
-@client.event
+@ client.event
 async def on_ready():
     global main_channel
     print('ready...')
