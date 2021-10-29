@@ -79,7 +79,7 @@ async def loop():
         # DB登録
         result = request.post_database(tw)
 
-        # TODO: 1回投稿したツイートを除外する（resultの値が500なら実行）
+        # TODO: 1回投稿したツイートを除外する（resultの値が200なら実行）
         if result == 200:
             embed = set_embed(tw)
             message = await main_channel.send(embed=embed)
