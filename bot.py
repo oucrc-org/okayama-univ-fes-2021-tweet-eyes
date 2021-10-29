@@ -25,12 +25,13 @@ client = discord.Client(activity=discord.Game(
 # ツイート内容を格納するクラス
 # 引数はDBと同じ
 class tweet:
-    def __init__(self, twitter_id, avatar_url, display_name, comment, tweet_url):
+    def __init__(self, twitter_id, avatar_url, display_name, comment, tweet_url, id):
         self.twitter_id = twitter_id
         self.avatar_url = avatar_url
         self.display_name = display_name
         self.comment = comment
         self.tweet_url = tweet_url
+        self.id = id
 
 
 # =====以下予定=====
@@ -58,6 +59,7 @@ def set_embed(tweet):
                      url='https://twitter.com/' + tweet.twitter_id,
                      icon_url=tweet.avatar_url
                      )
+    embed.set_footer(text=tweet.id)
     embed.add_field(name='承認', value='👍')
     embed.add_field(name='却下', value='👎')
     return embed
@@ -67,27 +69,26 @@ def set_embed(tweet):
 async def loop():
     # ツイート一覧の取得
     api = loadenv.get_tw_api()
-    searchResults = api.search_tweets('#にゃんこ大戦争')
-    # for: ツイートごとの処理
-    # ツイートから中身を取ってくる
-    tws = [tweet(searchResult.user.screen_name, searchResult.user.profile_image_url_https, searchResult.user.name, searchResult.text, f'https://twitter.com/{searchResult.user.screen_name}/status/{searchResult.id_str}')
-           for searchResult in searchResults if not hasattr(searchResult, 'retweeted_status')]
-    # これからすること: 1回投稿したツイートは除外する(RTを除外するところまでは実装しています)
-    for tw in tws:
-        embed = set_embed(tw)
-        message = await main_channel.send(embed=embed)
+    searchResults = api.search_tweets('#眠気しかかたん')
 
-        # スタンプ設置
-        await message.add_reaction('👍')
-        await message.add_reaction('👎')
+    # ツイートを取ってくる
+    tws = [tweet(searchResult.user.screen_name, searchResult.user.profile_image_url_https, searchResult.user.name, searchResult.text, f'https://twitter.com/{searchResult.user.screen_name}/status/{searchResult.id_str}', searchResult.id_str)
+           for searchResult in searchResults if not hasattr(searchResult, 'retweeted_status')]
+
+    for tw in tws:
         # DB登録
-        request.post_database(tw, message.id)
+        result = request.post_database(tw)
+
+        # TODO: 1回投稿したツイートを除外する（resultの値が200なら実行）
+        if result == 200:
+            embed = set_embed(tw)
+            message = await main_channel.send(embed=embed)
+
+            # スタンプ設置
+            await message.add_reaction('👍')
+            await message.add_reaction('👎')
 
     # このあとスタンプが押されたのを検知したら個別に関数呼び出して処理
-
-    # 以下は基本的に編集する必要なし
-
-    # Botの動作確認用
 
 
 @ client.event
@@ -96,12 +97,17 @@ async def on_raw_reaction_add(payload):
         return
     message = await main_channel.fetch_message(payload.message_id)
     if payload.emoji.name == '👍':
-        request.set_visible(message.id)
+        print(message.embeds[0].footer.text)
+        request.set_visible(int(message.embeds[0].footer.text))
         await message.delete()
     if payload.emoji.name == '👎':
         await message.delete()
 
 
+
+# 以下は基本的に編集する必要なし
+
+# Botの動作確認用
 @ client.event
 async def on_message(message):
     if message.author.bot:
