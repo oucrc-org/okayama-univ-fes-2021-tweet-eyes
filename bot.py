@@ -98,8 +98,11 @@ async def on_raw_reaction_add(payload):
     message = await main_channel.fetch_message(payload.message_id)
     if payload.emoji.name == '👍':
         print(message.embeds[0].footer.text)
-        request.set_visible(int(message.embeds[0].footer.text))
-        await message.delete()
+        rsp = request.set_visible(int(message.embeds[0].footer.text))
+        if rsp == 200:
+            await message.delete()
+        else:
+            return
     if payload.emoji.name == '👎':
         await message.delete()
 
