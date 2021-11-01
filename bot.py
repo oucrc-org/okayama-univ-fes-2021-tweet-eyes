@@ -33,6 +33,33 @@ class tweet:
         self.tweet_url = tweet_url
         self.id = id
 
+class Listener(tweepy.StreamListener):
+
+    async def on_status(self, status):
+
+        tw = tweet(status.user.screen_name, status.user.profile_image_url_https, status.user.name, status.text, f'https://twitter.com/{status.user.screen_name}/status/{status.id_str}', status.id_str)
+        
+        # DB登録
+        result = request.post_database(tw)
+
+        # TODO: 1回投稿したツイートを除外する（resultの値が200なら実行）
+        if result == 200:
+            embed = set_embed(tw)
+            message = await main_channel.send(embed=embed)
+
+            # スタンプ設置
+            await message.add_reaction('👍')
+            await message.add_reaction('👎')
+        return True
+
+    def on_error(self, status_code):
+        print('Got an error with status code: ' + str(status_code))
+        return True
+
+    def on_timeout(self):
+        print('Timeout...')
+        return True
+
 
 # =====以下予定=====
 # Twitter APIを30分ごとに定期実行して新しいツイートがあるか確認する
@@ -65,30 +92,31 @@ def set_embed(tweet):
     return embed
 
 
-@ tasks.loop(seconds=10)
-async def loop():
-    # ツイート一覧の取得
-    api = loadenv.get_tw_api()
-    searchResults = api.search_tweets('#眠気しかかたん')
-
-    # ツイートを取ってくる
-    tws = [tweet(searchResult.user.screen_name, searchResult.user.profile_image_url_https, searchResult.user.name, searchResult.text, f'https://twitter.com/{searchResult.user.screen_name}/status/{searchResult.id_str}', searchResult.id_str)
-           for searchResult in searchResults if not hasattr(searchResult, 'retweeted_status')]
-
-    for tw in tws:
-        # DB登録
-        result = request.post_database(tw)
-
-        # TODO: 1回投稿したツイートを除外する（resultの値が200なら実行）
-        if result == 200:
-            embed = set_embed(tw)
-            message = await main_channel.send(embed=embed)
-
-            # スタンプ設置
-            await message.add_reaction('👍')
-            await message.add_reaction('👎')
-
-    # このあとスタンプが押されたのを検知したら個別に関数呼び出して処理
+# @ tasks.loop(seconds=30)
+# async def loop():
+#     # ツイート一覧の取得
+#     api = loadenv.get_tw_api()
+#     searchResults = api.search_tweets('#おやすみ世界')
+# 
+#     # ツイートを取ってくる
+#     tws = [tweet(searchResult.user.screen_name, searchResult.user.profile_image_url_https, searchResult.user.name, searchResult.text, f'https://twitter.com/{searchResult.user.screen_name}/status/{searchResult.id_str}', searchResult.id_str)
+#            for searchResult in searchResults if not hasattr(searchResult, 'retweeted_status')]
+#     print('List Length = ' + str(len(tws)))
+# 
+#     for tw in tws:
+#         # DB登録
+#         result = request.post_database(tw)
+# 
+#         # TODO: 1回投稿したツイートを除外する（resultの値が200なら実行）
+#         if result == 200:
+#             embed = set_embed(tw)
+#             message = await main_channel.send(embed=embed)
+# 
+#             # スタンプ設置
+#             await message.add_reaction('👍')
+#             await message.add_reaction('👎')
+# 
+#     # このあとスタンプが押されたのを検知したら個別に関数呼び出して処理
 
 
 @ client.event
@@ -145,7 +173,12 @@ async def on_ready():
 
     # デフォルトの送信先チャンネルのIDを静的に与えた方が良いかも
     main_channel = await client.fetch_channel(loadenv.get_channel_id())
-    loop.start()
+
+    listener = Listener()
+    api = loadenv.get_tw_api()
+    stream = tweepy.Stream(api.auth, listener)
+    stream.filter(track=['#おはよう世界'])
+    # loop.start()
 
 
 # ログイン処理

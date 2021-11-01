@@ -18,7 +18,7 @@ def post_database(tweet):
                     'id':tweet.id}
 
     response = requests.post(url, headers=hds, json=request_body)
-
+    print(response.status_code)
     return response.status_code # 成功で200、失敗で422を返す
 
 def set_visible(id):
