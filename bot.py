@@ -65,11 +65,11 @@ def set_embed(tweet):
     return embed
 
 
-@ tasks.loop(seconds=10)
+@ tasks.loop(minutes=10)
 async def loop():
     # ツイート一覧の取得
     api = loadenv.get_tw_api()
-    searchResults = api.search_tweets('#眠気しかかたん')
+    searchResults = api.search_tweets('#岡山大学祭2021')
 
     # ツイートを取ってくる
     tws = [tweet(searchResult.user.screen_name, searchResult.user.profile_image_url_https, searchResult.user.name, searchResult.text, f'https://twitter.com/{searchResult.user.screen_name}/status/{searchResult.id_str}', searchResult.id_str)
