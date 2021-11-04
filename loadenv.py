@@ -38,3 +38,6 @@ def get_tw_api():
     api = tweepy.API(auth)
 
     return api
+
+def get_mention():
+    return os.getenv('MENTION')

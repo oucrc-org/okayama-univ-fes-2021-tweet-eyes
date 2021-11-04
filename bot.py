@@ -81,6 +81,7 @@ async def loop():
 
         # TODO: 1回投稿したツイートを除外する（resultの値が200なら実行）
         if result == 200:
+            await main_channel.send(loadenv.get_mention())
             embed = set_embed(tw)
             message = await main_channel.send(embed=embed)
 
