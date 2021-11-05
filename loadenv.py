@@ -39,5 +39,5 @@ def get_tw_api():
 
     return api
 
-def get_mention():
+def get_mention_id():
     return os.getenv('MENTION')
