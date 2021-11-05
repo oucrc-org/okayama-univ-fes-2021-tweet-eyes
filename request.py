@@ -28,7 +28,7 @@ def set_visible(id):
     hds = {'Client-Api-Key': str(loadenv.get_db_apikey())}
 
     response = requests.post(url, headers=hds)
-
+    print('Status Code: ' + str(response.status_code))
     return response.status_code # 成功で200、失敗で422を返す
 
 if __name__ == '__main__':
