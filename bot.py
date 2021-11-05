@@ -81,7 +81,8 @@ async def loop():
 
         # TODO: 1回投稿したツイートを除外する（resultの値が200なら実行）
         if result == 200:
-            await main_channel.send(loadenv.get_mention())
+            member = client.get_user(loadenv.get_mention_id())
+            await main_channel.send(member)
             embed = set_embed(tw)
             message = await main_channel.send(embed=embed)
 
@@ -122,6 +123,7 @@ async def on_message(message):
         await message.channel.send('pong')
         print('Ping Pong Test')
         print(message.channel.id)
+        print(message.author.id)
         return
 
     # ラズパイの状態確認（SSHで毎回コマンド打つのだるいので）
